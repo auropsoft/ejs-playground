@@ -1,10 +1,11 @@
 (function () {
 
     var $result = document.getElementById("result");
+    var $preview = document.getElementById("preview");
 
     function update () {
         var result = null
-          , input = editor.getValue()
+          , input = `<% const include=()=>''; ${dataEditor.getValue()} %> ${templateEditor.getValue()}`
           ;
 
         try {
@@ -16,13 +17,32 @@
         }
 
         $result.textContent = result;
+        $preview.contentDocument.documentElement.innerHTML = result;
     }
 
-    var editor = ace.edit("editor");
-    editor.setTheme("ace/theme/monokai");
-    editor.getSession().setMode("ace/mode/ejs");
-    editor.on("change", update);
-    editor.setValue(`OK, so have fun! :D
+    var templateEditor = ace.edit("editor-template");
+    templateEditor.setTheme("ace/theme/monokai");
+    templateEditor.getSession().setMode("ace/mode/ejs");
+    templateEditor.on("change", update);
+    templateEditor.setOptions({
+      fontFamily: "Iosevka, monospace",
+      fontSize: "12px",
+      tabSize: 2,
+    });
+    templateEditor.setShowPrintMargin(false);
+
+    var dataEditor = ace.edit("editor-data");
+    dataEditor.setTheme("ace/theme/monokai");
+    dataEditor.getSession().setMode("ace/mode/javascript");
+    dataEditor.on("change", update);
+    dataEditor.setOptions({
+      fontFamily: "Iosevka, monospace",
+      fontSize: "12px",
+      tabSize: 2,
+    });
+    dataEditor.setShowPrintMargin(false);
+
+    templateEditor.setValue(`OK, so have fun! :D
 -------------------
 <%
     var fruits = ["Apple", "Pear", "Orange", "Lemon"]
@@ -38,5 +58,5 @@ Let's see some random numbers:
 
 <% random.forEach((c, i) => {
 %> <%=c.toFixed(10) + ((i + 1) % 6 === 0 ? "\\n": "") %><%});%>`, -1);
-    editor.focus();
+    templateEditor.focus();
 })();

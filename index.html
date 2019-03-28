@@ -8,15 +8,22 @@
         <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
     </head>
     <body>
-        <div class="row">
-            <div class="col">
-                <div id="editor">
-
-                </div>
+        <div class="container">
+            <div class="tabs">
+                <a href="#editor-data">Data</a>
+                <a href="#editor-template">Template</a>
             </div>
-            <div class="col col-result custom-scrollbar">
-                <pre id="result">
-                </pre>
+            <div class="tabs">
+                <a href="#result">Result</a>
+                <a href="#preview">Preview</a>
+            </div>
+            <div class="tab-folder">
+                <div id="editor-data" class="tab-content"></div>
+                <div id="editor-template" class="tab-content"></div>
+            </div>
+            <div class="tab-folder">
+                <pre id="result" class="tab-content"></pre>
+                <iframe id="preview" class="tab-content"></iframe>
             </div>
         </div>
         <div class="footer">
