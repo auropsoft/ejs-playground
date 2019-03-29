@@ -168,6 +168,18 @@ Let's see some random numbers:
 						return `<pre>${e.stack}</pre>`
 					}
 				}
+			},
+			created() {
+				if (localStorage.ejsData) this.ejsData = localStorage.ejsData
+				if (localStorage.ejsTemplate) this.ejsTemplate = localStorage.ejsTemplate
+			},
+			watch: {
+				ejsData(value) {
+					localStorage.ejsData = value
+				},
+				ejsTemplate(value) {
+					localStorage.ejsTemplate = value
+				}
 			}
 		})
 	</script>
