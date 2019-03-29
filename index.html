@@ -1,34 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>EJS Playground</title>
-        <script src="https://npmcdn.com/ejs/ejs.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.3/ace.js"></script>
-        <link rel="stylesheet" href="css/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
-    </head>
-    <body>
-        <div class="container">
-            <div class="tabs">
-                <a href="#editor-data">Data</a>
-                <a href="#editor-template">Template</a>
-            </div>
-            <div class="tabs">
-                <a href="#result">Result</a>
-                <a href="#preview">Preview</a>
-            </div>
-            <div class="tab-folder">
-                <div id="editor-data" class="tab-content"></div>
-                <div id="editor-template" class="tab-content"></div>
-            </div>
-            <div class="tab-folder">
-                <pre id="result" class="tab-content"></pre>
-                <iframe id="preview" class="tab-content"></iframe>
-            </div>
-        </div>
-        <div class="footer">
-            <span class="octicon octicon-code"></span> with <span class="octicon octicon-heart"></span> by <a href="https://github.com/IonicaBizau">@IonicaBizau</a> |  <a href="https://github.com/IonicaBizau/ejs-playground"> <span class="octicon octicon-octoface"></span> @IonicaBizau/ejs-playground</a>
-        </div>
-        <script src="js/main.js"></script>
-    </body>
+<head>
+	<meta charset="UTF-8">
+	<title>EJS Playground</title>
+	<link rel="stylesheet" href="css/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
+	<script src="https://npmcdn.com/ejs/ejs.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.3/ace.js"></script>
+	<script src="https://unpkg.com/vue"></script>
+</head>
+<body>
+	<div id="app"></div>
+	<script>
+		// from https://codepen.io/jakob-e/pen/XMMxPm
+		const VueAceEditor = {
+			// simplified model handling using `value` prop and `input` event for $emit
+			props: ['value', 'id', 'options'],
+
+			// add dynmic class and id (if not set) based on component tag
+			template: `
+				<div :id="id ? id: $options._componentTag + '-' + _uid" :class="$options._componentTag">
+					<slot></slot>
+				</div>`,
+
+			mounted() {
+				// editor
+				this.editor = window.ace.edit(this.$el.id)
+
+				// ignore doctype warnings
+				const session = this.editor.getSession()
+				session.on('changeAnnotation', () => {
+					const a = session.getAnnotations()
+					const b = a.slice(0).filter(item => item.text.indexOf('DOC') == -1)
+					if (a.length > b.length) session.setAnnotations(b)
+				})
+
+				// editor options
+				// https://github.com/ajaxorg/ace/wiki/Configuring-Ace
+				let options = Object.assign({}, this.options)
+
+				// opinionated option defaults
+				options.printMargin = options.printMargin || false
+				options.highlightActiveLine = options.highlightActiveLine || false
+
+				// hide cursor
+				if (options.cursor === 'none' || options.cursor === false) {
+					this.editor.renderer.$cursorLayer.element.style.display = 'none'
+					delete options.cursor
+				}
+
+				// add missing mode and theme paths
+				if (options.mode && options.mode.indexOf('ace/mode/') === -1) {
+					options.mode = `ace/mode/${options.mode}`
+				}
+				if (options.theme && options.theme.indexOf('ace/theme/') === -1) {
+					options.theme = `ace/theme/${options.theme}`
+				}
+				this.editor.setOptions(options)
+
+				// set model value
+				// if no model value found – use slot content
+				if (!this.value || this.value === '') {
+					this.$emit('input', this.editor.getValue())
+				} else {
+					this.editor.setValue(this.value, -1)
+				}
+
+				// editor value changes
+				this.editor.on('change', () => {
+					// oldValue set to prevent internal updates
+					//this.oldValue = this.editor.getValue();
+					this.$emit('input', this.editor.getValue())
+				})
+			}
+		}
+
+		const VueIframe = {
+			props: ['html'],
+			template: `<iframe ref="iframe"></iframe>`,
+			mounted() {
+				this.$refs.iframe.contentDocument.documentElement.innerHTML = this.html
+			},
+			watch: {
+				html(html) {
+					this.$refs.iframe.contentDocument.documentElement.innerHTML = html
+				}
+			}
+		}
+
+		new Vue({
+			el: '#app',
+			components: {
+				VueAceEditor,
+				VueIframe
+			},
+			template: `
+				<div class="container">
+					<div class="tabs">
+						<button @click.stop="editorTab = 'data'">Data</button>
+						<button @click.stop="editorTab = 'template'">Template</button>
+					</div>
+					<div class="tabs">
+						<button @click.stop="resultTab = 'result'">Result</button>
+						<button @click.stop="resultTab = 'preview'">Preview</button>
+					</div>
+					<div class="tab-folder">
+						<vue-ace-editor
+							id="data-editor"
+							v-show="editorTab === 'data'"
+							v-model="ejsData"
+							:options="{
+								mode: 'javascript',
+								theme: 'monokai',
+								fontSize: 12,
+								fontFamily: 'monospace',
+								highlightActiveLine: false,
+								highlightGutterLine: true,
+								tabSize: 2,
+							}"
+						/>
+						<vue-ace-editor
+							id="template-editor"
+							v-show="editorTab === 'template'"
+							v-model="ejsTemplate"
+							:options="{
+								mode: 'ejs',
+								theme: 'monokai',
+								fontSize: 12,
+								fontFamily: 'monospace',
+								highlightActiveLine: false,
+								highlightGutterLine: true,
+								tabSize: 2,
+							}"
+						/>
+					</div>
+					<div class="tab-folder">
+						<pre v-show="resultTab === 'result'">{{ output }}</pre>
+						<vue-iframe v-show="resultTab === 'preview'" :html="output"/>
+					</div>
+				</div>`,
+			data: {
+				ejsData: '',
+				ejsTemplate: `OK, so have fun! :D
+-------------------
+<%
+    var fruits = ["Apple", "Pear", "Orange", "Lemon"]
+      , random = " ".repeat(198).split("").map(x => Math.random())
+      ;
+%>
+
+These fruits are amazing:
+<% for(var i = 0; i < fruits.length; ++i) {%>
+  - <%=fruits[i]%>s<% } %>
+
+Let's see some random numbers:
+
+<% random.forEach((c, i) => {
+%> <%=c.toFixed(10) + ((i + 1) % 6 === 0 ? "\\n": "") %><%});%>`,
+				editorTab: 'template',
+				resultTab: 'preview'
+			},
+			computed: {
+				output() {
+					try {
+						let input = `<% const include = () => ''; ${this.ejsData} %> ${this.ejsTemplate}`
+						return ejs.render(input)
+					} catch (e) {
+						return `<pre>${e.stack}</pre>`
+					}
+				}
+			}
+		})
+	</script>
+	<div class="footer">
+		<span class="octicon octicon-code"></span> with <span class="octicon octicon-heart"></span> by <a href="https://github.com/IonicaBizau">@IonicaBizau</a> |  <a href="https://github.com/IonicaBizau/ejs-playground"> <span class="octicon octicon-octoface"></span> @IonicaBizau/ejs-playground</a>
+	</div>
+</body>
 </html>
