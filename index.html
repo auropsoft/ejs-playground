@@ -4,75 +4,40 @@
 	<meta charset="UTF-8">
 	<title>EJS Playground</title>
 	<link rel="stylesheet" href="css/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
-	<script src="https://npmcdn.com/ejs/ejs.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.3/ace.js"></script>
-	<script src="https://unpkg.com/vue"></script>
+	<link rel="stylesheet" href="https://unpkg.com/codemirror/lib/codemirror.css">
+	<link rel="stylesheet" href="https://unpkg.com/codemirror/theme/monokai.css">
+	<script src="https://unpkg.com/ejs/ejs.min.js"></script>
+	<script src="https://unpkg.com/codemirror/lib/codemirror.js"></script>
+	<script src="https://unpkg.com/codemirror/mode/javascript/javascript.js"></script>
+	<script src="https://unpkg.com/codemirror/mode/htmlembedded/htmlembedded.js"></script>
+	<script src="https://unpkg.com/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+	<script src="https://unpkg.com/codemirror/mode/css/css.js"></script>
+	<script src="https://unpkg.com/codemirror/mode/xml/xml.js"></script>
+	<script src="https://unpkg.com/codemirror/keymap/sublime.js"></script>
+	<script src="https://unpkg.com/codemirror/addon/mode/multiplex.js"></script>
+	<script src="https://unpkg.com/codemirror/addon/selection/active-line.js"></script>
+	<script src="https://unpkg.com/vue/dist/vue.min.js"></script>
+	<script src="https://unpkg.com/vue-codemirror"></script>
 </head>
 <body>
 	<div id="app"></div>
 	<script>
-		// from https://codepen.io/jakob-e/pen/XMMxPm
-		const VueAceEditor = {
-			// simplified model handling using `value` prop and `input` event for $emit
-			props: ['value', 'id', 'options'],
-
-			// add dynmic class and id (if not set) based on component tag
-			template: `
-				<div :id="id ? id: $options._componentTag + '-' + _uid" :class="$options._componentTag">
-					<slot></slot>
-				</div>`,
-
-			mounted() {
-				// editor
-				this.editor = window.ace.edit(this.$el.id)
-
-				// ignore doctype warnings
-				const session = this.editor.getSession()
-				session.on('changeAnnotation', () => {
-					const a = session.getAnnotations()
-					const b = a.slice(0).filter(item => item.text.indexOf('DOC') == -1)
-					if (a.length > b.length) session.setAnnotations(b)
-				})
-
-				// editor options
-				// https://github.com/ajaxorg/ace/wiki/Configuring-Ace
-				let options = Object.assign({}, this.options)
-
-				// opinionated option defaults
-				options.printMargin = options.printMargin || false
-				options.highlightActiveLine = options.highlightActiveLine || false
-
-				// hide cursor
-				if (options.cursor === 'none' || options.cursor === false) {
-					this.editor.renderer.$cursorLayer.element.style.display = 'none'
-					delete options.cursor
-				}
-
-				// add missing mode and theme paths
-				if (options.mode && options.mode.indexOf('ace/mode/') === -1) {
-					options.mode = `ace/mode/${options.mode}`
-				}
-				if (options.theme && options.theme.indexOf('ace/theme/') === -1) {
-					options.theme = `ace/theme/${options.theme}`
-				}
-				this.editor.setOptions(options)
-
-				// set model value
-				// if no model value found – use slot content
-				if (!this.value || this.value === '') {
-					this.$emit('input', this.editor.getValue())
-				} else {
-					this.editor.setValue(this.value, -1)
-				}
-
-				// editor value changes
-				this.editor.on('change', () => {
-					// oldValue set to prevent internal updates
-					//this.oldValue = this.editor.getValue();
-					this.$emit('input', this.editor.getValue())
-				})
+		Vue.use(VueCodemirror, {
+			options: {
+				theme: 'monokai',
+				tabSize: 2,
+				indentWithTabs: false,
+				keyMap: 'sublime',
+				lineWrapping: true,
+				lineNumbers: true,
+				showCursorWhenSelecting: true,
+				lineWiseCopyCut: true,
+				dragDrop: false,
+				cursorBlinkRate: 0,
+				cursorScrollMargin: 0,
+				styleActiveLine: true,
 			}
-		}
+		})
 
 		const VueIframe = {
 			props: ['html'],
@@ -90,7 +55,7 @@
 		new Vue({
 			el: '#app',
 			components: {
-				VueAceEditor,
+				//VueAceEditor,
 				VueIframe
 			},
 			template: `
@@ -104,32 +69,22 @@
 						<button @click.stop="resultTab = 'preview'">Preview</button>
 					</div>
 					<div class="tab-folder">
-						<vue-ace-editor
-							id="data-editor"
+						<codemirror
+							ref="dataEditor"
 							v-show="editorTab === 'data'"
 							v-model="ejsData"
 							:options="{
-								mode: 'javascript',
-								theme: 'monokai',
-								fontSize: 12,
-								fontFamily: 'monospace',
-								highlightActiveLine: false,
-								highlightGutterLine: true,
-								tabSize: 2,
+								mode: 'text/javascript',
+								indentWithTabs: false,
 							}"
 						/>
-						<vue-ace-editor
-							id="template-editor"
+						<codemirror
+							ref="templateEditor"
 							v-show="editorTab === 'template'"
 							v-model="ejsTemplate"
 							:options="{
-								mode: 'ejs',
-								theme: 'monokai',
-								fontSize: 12,
-								fontFamily: 'monospace',
-								highlightActiveLine: false,
-								highlightGutterLine: true,
-								tabSize: 2,
+								mode: 'application/x-ejs',
+								indentWithTabs: true,
 							}"
 						/>
 					</div>
@@ -143,9 +98,9 @@
 				ejsTemplate: `OK, so have fun! :D
 -------------------
 <%
-    var fruits = ["Apple", "Pear", "Orange", "Lemon"]
-      , random = " ".repeat(198).split("").map(x => Math.random())
-      ;
+	var fruits = ["Apple", "Pear", "Orange", "Lemon"]
+	  , random = " ".repeat(198).split("").map(x => Math.random())
+	  ;
 %>
 
 These fruits are amazing:
@@ -162,22 +117,36 @@ Let's see some random numbers:
 			computed: {
 				output() {
 					try {
+						console.log('render ejs')
 						let input = `<% const include = () => ''; ${this.ejsData} %> ${this.ejsTemplate}`
 						return ejs.render(input)
 					} catch (e) {
 						return `<pre>${e.stack}</pre>`
 					}
+				},
+				dataEditor() {
+					return this.$refs.dataEditor.codemirror
+				},
+				templateEditor() {
+					return this.$refs.templateEditor.codemirror
 				}
 			},
 			created() {
 				if (localStorage.ejsData) this.ejsData = localStorage.ejsData
 				if (localStorage.ejsTemplate) this.ejsTemplate = localStorage.ejsTemplate
 			},
+			mounted() {
+				this.dataEditor.setSize('100%', '100%')
+				this.templateEditor.setSize('100%', '100%')
+			},
 			watch: {
 				ejsData(value) {
+					this.templateEditor.setOption('firstLineNumber', this.dataEditor.lineCount() + 1)
+					console.log('dehydrate data')
 					localStorage.ejsData = value
 				},
 				ejsTemplate(value) {
+					console.log('dehydrate template')
 					localStorage.ejsTemplate = value
 				}
 			}

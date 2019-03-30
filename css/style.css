@@ -55,3 +55,9 @@ pre {
 .failure {
     background: #c0392b;
 }
+
+.CodeMirror-cursor {
+    width: auto !important;
+    border: 0 !important;
+    background: rgb(247, 223, 30) !important;
+}
