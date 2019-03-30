@@ -56,8 +56,25 @@ pre {
     background: #c0392b;
 }
 
+.CodeMirror {
+    font-family: PragmataPro, Iosevka, monospace !important;
+    font-size: 11px;
+}
+
 .CodeMirror-cursor {
     width: auto !important;
     border: 0 !important;
     background: rgb(247, 223, 30) !important;
+}
+
+.cm-tab {
+    tab-size: 2;
+    position: relative;
+}
+
+.cm-tab::before {
+    content: '→';
+    color: #eee;
+    position: absolute;
+    font-size: 0.9em;
 }
