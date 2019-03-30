@@ -6,6 +6,7 @@
 	<link rel="stylesheet" href="css/style.css" type="text/css" media="screen" title="no title" charset="utf-8">
 	<link rel="stylesheet" href="https://unpkg.com/codemirror/lib/codemirror.css">
 	<link rel="stylesheet" href="https://unpkg.com/codemirror/theme/monokai.css">
+	<link rel="stylesheet" href="https://unpkg.com/codemirror/addon/display/fullscreen.css">
 	<script src="https://unpkg.com/ejs/ejs.min.js"></script>
 	<script src="https://unpkg.com/codemirror/lib/codemirror.js"></script>
 	<script src="https://unpkg.com/codemirror/mode/javascript/javascript.js"></script>
@@ -16,6 +17,7 @@
 	<script src="https://unpkg.com/codemirror/keymap/sublime.js"></script>
 	<script src="https://unpkg.com/codemirror/addon/mode/multiplex.js"></script>
 	<script src="https://unpkg.com/codemirror/addon/selection/active-line.js"></script>
+	<script src="https://unpkg.com/codemirror/addon/display/fullscreen.js"></script>
 	<script src="https://unpkg.com/vue/dist/vue.min.js"></script>
 	<script src="https://unpkg.com/vue-codemirror"></script>
 </head>
@@ -36,6 +38,11 @@
 				cursorBlinkRate: 0,
 				cursorScrollMargin: 0,
 				styleActiveLine: true,
+				extraKeys: {
+					F11: (cm) => {
+						cm.setOption('fullScreen', !cm.getOption('fullScreen'));
+					}
+				}
 			}
 		})
 
